@@ -11,7 +11,27 @@ public unsafe static class ItemQueueUI
     public static List<QueueEntry> TradeQueue = [];
     public static Dictionary<ItemDescriptor, Box<int>> ItemQuantities = [];
     static bool OnlySelected = false;
+    static bool NoEssentials = false;
     static string Filter = "";
+    public static bool IsEssential(InventoryItem item)
+    {
+
+        if 
+        (
+            NoEssentials && 
+            (
+                (item.ItemId == 21800) || //glamour prism
+                (item.ItemId == 10155) || //ceruleum tank
+                (item.ItemId == 10373) || //magitek repair materials
+                (item.ItemId == 4868) //gysahl greens
+            )
+        )
+        {
+            return false;
+        }
+        else
+            return true;
+    }
     public static void Draw()
     {
         if(P.StopRequests.Count > 0)
@@ -36,6 +56,8 @@ public unsafe static class ItemQueueUI
         ImGui.InputTextWithHint("##filter", "Search", ref Filter, 100);
         ImGui.SameLine();
         ImGui.Checkbox("Show only selected", ref OnlySelected);
+        ImGui.SameLine();
+        ImGui.Checkbox("Disable essentials", ref NoEssentials);
         //ImGui.SameLine();
 
         bool? selectedGil = (ItemQuantities.TryGetValue(new(1, false), out var gilc) && gilc.Value > 0) ? (gilc.Value == InventoryManager.Instance()->GetInventoryItemCount(1) ? true : null) : false;
@@ -326,7 +348,7 @@ public unsafe static class ItemQueueUI
             for (var i = 0u; i < cont->Size; i++)
             {
                 var item = *cont->GetInventorySlot((int)i);
-                if(item.ItemId != 0 && item.SpiritbondOrCollectability == 0 && P.TradeableItems.Contains(item.ItemId) && item.GlamourId == 0)
+                if(item.ItemId != 0 && item.SpiritbondOrCollectability == 0 && P.TradeableItems.Contains(item.ItemId) && item.GlamourId == 0 && IsEssential(item))
                 {
                     if(ret.TryGetFirst(x=> x.Descriptor.Id == item.ItemId && x.Descriptor.HQ == item.Flags.HasFlag(InventoryItem.ItemFlags.HighQuality), out var itemRecord))
                     {
