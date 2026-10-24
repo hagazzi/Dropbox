@@ -12,6 +12,7 @@ public unsafe static class ItemQueueUI
     public static Dictionary<ItemDescriptor, Box<int>> ItemQuantities = [];
     static bool OnlySelected = false;
     static bool NoEssentials = false;
+    static bool SearchArmory = true;
     static string Filter = "";
     public static bool IsEssential(InventoryItem item)
     {
@@ -58,6 +59,8 @@ public unsafe static class ItemQueueUI
         ImGui.Checkbox("Show only selected", ref OnlySelected);
         ImGui.SameLine();
         ImGui.Checkbox("Disable essentials", ref NoEssentials);
+        ImGui.SameLine();
+        ImGui.Checkbox("Armory", ref SearchArmory);
         //ImGui.SameLine();
 
         bool? selectedGil = (ItemQuantities.TryGetValue(new(1, false), out var gilc) && gilc.Value > 0) ? (gilc.Value == InventoryManager.Instance()->GetInventoryItemCount(1) ? true : null) : false;
@@ -320,6 +323,12 @@ public unsafe static class ItemQueueUI
         InventoryType.ArmoryWaist,
         InventoryType.ArmoryWrist,
         ];
+    public static readonly InventoryType[] ValidInventoriesExcludingArmory = [
+        InventoryType.Inventory1, 
+        InventoryType.Inventory2, 
+        InventoryType.Inventory3, 
+        InventoryType.Inventory4,
+        ];        
     public static readonly InventoryType[] CrystalInventories = [InventoryType.Crystals];
 
     public static readonly uint[] GearCategories = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 38, 40, 41, 42, 43, 84, 87, 88, 89, 96, 97, 98, 99, 105, 106, 107, 108, 109, 110, 111,];
@@ -340,7 +349,15 @@ public unsafe static class ItemQueueUI
         {
             ret.Add(new(1, false, (uint)im->GetInventoryItemCount(1)));
         }
-        if (items) toSearch.Add(ValidInventories);
+        if (SearchArmory)
+        {
+            if (items) toSearch.Add(ValidInventories);    
+        }
+        else
+        {
+            if (items) toSearch.Add(ValidInventoriesExcludingArmory);    
+        }
+        
         if (crystals) toSearch.Add(CrystalInventories);
         foreach (var inv in toSearch)
         {
