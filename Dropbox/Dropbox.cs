@@ -30,11 +30,15 @@ using Dalamud.Game;
 using Dalamud.Game.Chat;
 using ECommons.DalamudServices.Legacy;
 using NotificationMasterAPI;
+using Dalamud.IoC;
+using Dalamud.Plugin.Services;
 
 namespace Dropbox;
 
 public unsafe class Dropbox : IDalamudPlugin
 {
+	[PluginService] internal static IDataManager DataManager { get; private set; } = null!;
+	
     public string Name => "Dropbox";
     public string TradePartnerName = "";
     internal static Config C;

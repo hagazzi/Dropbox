@@ -4,16 +4,32 @@ using ECommons.ExcelServices;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using System.Reflection.Metadata.Ecma335;
+using ItemRow = Lumina.Excel.Sheets.Item;
+using Lumina.Excel;
 
 namespace Dropbox;
 public unsafe static class ItemQueueUI
 {
+    private static ExcelSheet<ItemRow>? itemSheetCache;
     public static List<QueueEntry> TradeQueue = [];
     public static Dictionary<ItemDescriptor, Box<int>> ItemQuantities = [];
     static bool OnlySelected = false;
     static bool NoEssentials = false;
     static bool SearchArmory = true;
     static string Filter = "";
+    private static ItemRow? GetItemRowById(uint itemId)
+    {
+        if (itemSheetCache == null)
+            itemSheetCache = DataManager.GetExcelSheet<ItemRow>();
+
+        return itemSheetCache?.GetRow(itemId);
+    }
+    private static bool IsHousingItem(ItemRow item)
+    {
+        HashSet<uint> housingItemsCategoryIds = [56, 65, 66, 67, 68, 69, 70, 71, 72];
+        bool isHousing = housingItemsCategoryIds.Contains(item.ItemSearchCategory.RowId);                        
+        return isHousing;
+    }     
     public static bool IsEssential(InventoryItem item)
     {
 
@@ -68,6 +84,7 @@ public unsafe static class ItemQueueUI
         var selectedItems = Utils.CompareSelection(GetTradeableItems(false, false, true));
         var selectedAll = Utils.CompareSelection(GetTradeableItems(true, true, true));
         var selectedGear = Utils.CompareSelection(GetTradeableGearItems());
+        var selectedHousing = Utils.CompareSelection(GetTradeableHousingItems());
 
         if (ImGuiEx.Checkbox("Gil", ref selectedGil))
         {
@@ -152,6 +169,24 @@ public unsafe static class ItemQueueUI
                 }
             }
         }
+        ImGui.SameLine();
+        if(ImGuiEx.Checkbox("Housing items", ref selectedHousing))
+        {
+            if(selectedGear == false)
+            {
+                foreach(var x in GetTradeableHousingItems())
+                {
+                    ItemQuantities.Remove(x.Descriptor);
+                }
+            }
+            else
+            {
+                foreach(var x in GetTradeableHousingItems())
+                {
+                    ItemQuantities[x.Descriptor] = new((int)x.Count);
+                }
+            }
+        }        
 
         List<ImGuiEx.EzTableEntry> Entries = [];
         foreach (var x in GetTradeableItems())
@@ -380,6 +415,38 @@ public unsafe static class ItemQueueUI
         }
         return ret;
     }
+
+    public static List<ItemRecord> GetTradeableHousingItems()
+    {
+        var ret = new List<ItemRecord>();
+        List<InventoryType> toSearch = [];
+        var im = InventoryManager.Instance();
+        toSearch.Add(ValidInventoriesExcludingArmory);
+        foreach (var inv in toSearch)
+        {
+            var cont = im->GetInventoryContainer(inv);
+            for (var i = 0u; i < cont->Size; i++)
+            {
+                var item = *cont->GetInventorySlot((int)i);
+                var row = GetItemRowById(item.ItemId);
+                if(item.ItemId != 0 && item.SpiritbondOrCollectability == 0 && P.TradeableItems.Contains(item.ItemId) && item.GlamourId == 0 && IsEssential(item) && IsHousingItem(row.Value))
+                {
+                    if(ret.TryGetFirst(x=> x.Descriptor.Id == item.ItemId && x.Descriptor.HQ == item.Flags.HasFlag(InventoryItem.ItemFlags.HighQuality), out var itemRecord))
+                    {
+                        itemRecord.Count += (uint)item.Quantity;
+                    }
+                    else
+                    {
+                        ret.Add(new(item.ItemId, item.Flags.HasFlag(InventoryItem.ItemFlags.HighQuality), (uint)item.Quantity));
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+
+
 
     public class ItemRecord
     {
