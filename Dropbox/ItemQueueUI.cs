@@ -172,7 +172,7 @@ public unsafe static class ItemQueueUI
         ImGui.SameLine();
         if(ImGuiEx.Checkbox("Housing items", ref selectedHousing))
         {
-            if(selectedGear == false)
+            if(selectedHousing == false)
             {
                 foreach(var x in GetTradeableHousingItems())
                 {
