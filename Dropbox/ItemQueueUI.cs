@@ -10,7 +10,7 @@ using Lumina.Excel;
 namespace Dropbox;
 public unsafe static class ItemQueueUI
 {
-    private static ExcelSheet<ItemRow>? itemSheetCache;
+    private static ExcelSheet<ItemRow> itemSheetCache;
     public static List<QueueEntry> TradeQueue = [];
     public static Dictionary<ItemDescriptor, Box<int>> ItemQuantities = [];
     static bool OnlySelected = false;
@@ -32,15 +32,21 @@ public unsafe static class ItemQueueUI
     }     
     public static bool IsEssential(InventoryItem item)
     {
-
+        //var it = GetItemRowById(item.ItemId).Value;
+        //bool isCatalyst = it.ItemUICategory.RowId == 60;
         if 
         (
             NoEssentials && 
             (
+                (item.ItemId == 7621)  || //glamour dispeller
+              //(item.ItemId == 10386) || //grade 6 darkmatter //questionable since they can be used to craft magitek repair mats
+                (item.ItemId == 33916) || //grade 8 darkmatter
+              //(item.ItemId == 17837) || //grade 7 darkmatter
                 (item.ItemId == 21800) || //glamour prism
                 (item.ItemId == 10155) || //ceruleum tank
                 (item.ItemId == 10373) || //magitek repair materials
-                (item.ItemId == 4868) //gysahl greens
+                (item.ItemId == 4868)//|| //gysahl greens
+              //isCatalyst //graded darkmatter,glamour dispeller, darkmatter cluster, glamour prism
             )
         )
         {
@@ -259,7 +265,7 @@ public unsafe static class ItemQueueUI
             ImGui.SameLine();
             if(ImGuiEx.IconButtonWithText(FontAwesomeIcon.Ban, "Clear focus target"))
             {
-                Chat.Instance.ExecuteCommand("/focustarget clear");
+                Chat.ExecuteCommand("/focustarget clear");
             }
         }
         else
@@ -269,7 +275,7 @@ public unsafe static class ItemQueueUI
             {
                 if (ImGuiEx.IconButtonWithText(FontAwesomeIcon.Expand, t))
                 {
-                    Chat.Instance.ExecuteCommand("/focustarget");
+                    Chat.ExecuteCommand("/focustarget");
                 }
             }
             else
@@ -324,7 +330,7 @@ public unsafe static class ItemQueueUI
         }
         if(C.AutoClear)
         {
-            P.TaskManager.Enqueue(() => Chat.Instance.ExecuteCommand("/focustarget clear"));
+            P.TaskManager.Enqueue(() => Chat.ExecuteCommand("/focustarget clear"));
         }
     }
 
